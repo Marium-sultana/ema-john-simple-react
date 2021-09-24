@@ -6,32 +6,39 @@ import { addToDb, getStoredCart } from '../../utilities/fakedb';
 const Shop = () => {
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
+    const [displayProduct, setDisplayProduct] = useState([]);
     useEffect(() => {
-        console.log('product API called')
+        // console.log('product API called')
         fetch('./products.JSON')
             .then(res => res.json())
             .then(data => {
                 setProducts(data);
-                console.log('Product revceived');
-                });
+                setDisplayProduct(data);
+                // console.log('Product revceived');
+            });
     }, [])
 
     useEffect(() => {
-        console.log('L S Call')
-        if(products.length){
+        // console.log('L S Call')
+        if (products.length) {
             const savedCart = getStoredCart();
             const storedCart = [];
             // console.log(savedCart)
             for (const key in savedCart) {
-                // console.log(key)
+                // console.log(savedCart[key])
+
                 const addedProduct = products.find(product => product.key === key);
-                storedCart.push(addedProduct)
+                if (addedProduct) {
+                    const quantity = savedCart[key];
+                    addedProduct.quantity = quantity;
+                    storedCart.push(addedProduct)
+                }
             }
             setCart(storedCart);
         }
     }, [products])
 
-        
+
     const handleAddToCart = (product) => {
         // console.log(product);
         const newCart = [...cart, product];
@@ -39,22 +46,35 @@ const Shop = () => {
         //save to local storage for now
         addToDb(product.key)
     }
-
+    const handleSearch = event => {
+        const searchText = event.target.value;
+        const matchedProduct = products.filter(product => product.name.toLowerCase().includes(searchText.toLowerCase()));
+        setDisplayProduct(matchedProduct);
+        // console.log(matchedProduct.length)
+    }
 
     return (
-        <div className="shop-container">
-            <div className="product-container">
-                <h3>Products:{products.length}</h3>
-                {
-                    products.map(product => <Product
-                        key={product.key}
-                        product={product}
-                        handleAddToCart={handleAddToCart}
-                    ></Product>)
-                }
+        <div>
+            <div className="search-container">
+                <input
+                    type="text"
+                    onChange={handleSearch}
+                    placeholder="Search Product" />
             </div>
-            <div className="cart-container">
-                <Cart cart={cart}></Cart>
+            <div className="shop-container">
+                <div className="product-container">
+                    {/* <h3>Products:{products.length}</h3> */}
+                    {
+                        displayProduct.map(product => <Product
+                            key={product.key}
+                            product={product}
+                            handleAddToCart={handleAddToCart}
+                        ></Product>)
+                    }
+                </div>
+                <div className="cart-container">
+                    <Cart cart={cart}></Cart>
+                </div>
             </div>
         </div>
     );
